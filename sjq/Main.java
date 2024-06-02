@@ -390,7 +390,7 @@ class TextGraphAnalyzer {
                     currentNode = prev.get(currentNode);
                 }
 
-                System.out.println("最短路径从 " + startWord + " 到 " + vertex + ": " + path.toString());
+                System.out.println("最短路径从 " + startWord + " 到 " + vertex + ": " + path);
             }
         }
     }
