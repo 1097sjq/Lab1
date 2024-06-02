@@ -22,7 +22,6 @@ public class Main {
         TextGraphAnalyzer analyzer = new TextGraphAnalyzer(filePath);
         System.out.println("文件读入，有向图已生成！");
         Scanner scanner = new Scanner(System.in);
-
         while (true) {
             System.out.println();
             System.out.println("-----------------------------------");
@@ -33,7 +32,8 @@ public class Main {
             System.out.println("3.查询桥接词");
             System.out.println("4.根据桥接词生成新文本");
             System.out.println("5.计算两单词间最短路径");
-            System.out.println("6.随机游走");
+            System.out.println("6.计算某一单词最短路径");
+            System.out.println("7.随机游走");
             System.out.println("-----------------------------------");
             System.out.println("请输入您选择的功能序号：");
             int choice = scanner.nextInt();
@@ -70,6 +70,13 @@ public class Main {
                     System.out.printf("%s 和 %s 的最短路径为:%s\n",word3,word4,distance);
                     break;
                 case 6:
+                    System.out.println("输入单词：");
+                    String word5=scanner.nextLine();
+
+                    analyzer.calcShortestMulPaths(word5);
+                    break;
+                case 7:
+
                     String randomPath= analyzer.randomWalk();
                     System.out.println("随机游走路径:\""+randomPath+"\"已写入文件");
                     break;
@@ -77,21 +84,7 @@ public class Main {
                     System.out.println("无效输入！请输入0~6的数字");
             }
         }
-        //System.out.println("Welcome to the Graph Analyzer!");
-        /*String word1=scanner.nextLine();
-        String word2=scanner.nextLine();
-        analyzer.showBridgeWords(word1, word2); // 替换为实际单词进行查询*/
-        /*String text = scanner.nextLine();
-        String newText=analyzer.generateNewText(text);
-        System.out.println(newText);*/
-        //analyzer.printGraph();
-        /*String word1=scanner.nextLine();
-        String word2=scanner.nextLine();
-        String distance=analyzer.calcShortestPath(word1,word2);
-        System.out.println(distance);*/
 
-        //analyzer.visualizeGraph();
-        //showDirectedGraph(analyzer.getGraph());
 
     }
     static void showDirectedGraph(Map<String, Map<String, Integer>> graph) {
@@ -139,7 +132,6 @@ public class Main {
 class TextGraphAnalyzer {
     private final Pattern NON_LETTER_PATTERN = Pattern.compile("[^a-zA-Z\\s]");
     private final Map<String, Map<String, Integer>> graph;
-
     public TextGraphAnalyzer(String filePath) {
         this.graph = buildGraphFromFile(filePath);
     }
@@ -305,11 +297,14 @@ class TextGraphAnalyzer {
             // 如果当前节点是目标节点，重建路径并返回
             if (currentNode != null && currentNode.equals(word2)) {
                 StringBuilder path = new StringBuilder(word2); // 从目标节点开始
+                int totalDistance = dist.get(word2); // 获取最短路径的总距离
+
                 // 通过前驱节点表重建路径
                 while (prev.get(currentNode) != null) {
                     path.insert(0, "→").insert(0, prev.get(currentNode));
                     currentNode = prev.get(currentNode);
                 }
+                System.out.println("Shortest Path Length: " + totalDistance);
                 return path.toString(); // 返回路径字符串
             }
 
@@ -333,10 +328,76 @@ class TextGraphAnalyzer {
         // 如果没有找到路径，返回提示信息
         return "No path found from " + word1 + " to " + word2;
     }
+    public void calcShortestMulPaths(String startWord) {
+        // 检查 startWord 是否在图中
+        if (!graph.containsKey(startWord)) {
+            System.out.println("The word is not in the graph!");
+            return;
+        }
 
+        final int INF = Integer.MAX_VALUE; // 定义一个无穷大值，用于初始化距离
+        Map<String, Integer> dist = new HashMap<>(); // 存储从 startWord 到各节点的最短距离
+        Map<String, String> prev = new HashMap<>(); // 存储最短路径上的前驱节点
+        Comparator<Map.Entry<String, Integer>> comparator = Comparator.comparingInt(Map.Entry::getValue);
+        // 使用 TreeSet 实现优先队列，以便在更新距离时能够删除旧的条目
+        TreeSet<Map.Entry<String, Integer>> pq = new TreeSet<>(comparator.thenComparing(Map.Entry::getKey));
+
+        // 初始化 dist 和 prev，并将所有节点加入优先队列
+        for (String vertex : graph.keySet()) {
+            int distance = vertex.equals(startWord) ? 0 : INF; // 起点距离为 0，其他点为无穷大
+            dist.put(vertex, distance); // 初始化距离表
+            prev.put(vertex, null); // 初始化前驱节点表
+            pq.add(new AbstractMap.SimpleEntry<>(vertex, distance)); // 将节点加入优先队列
+        }
+
+        // 主循环，直到优先队列为空
+        while (!pq.isEmpty()) {
+            // 取出优先队列中最小距离的节点
+            Map.Entry<String, Integer> entry = pq.pollFirst();
+            String currentNode = null;
+            if (entry != null) {
+                currentNode = entry.getKey();
+            }
+
+            if (currentNode != null) {
+                // 更新邻居节点的距离
+                Map<String, Integer> neighbors = graph.get(currentNode);
+                for (Map.Entry<String, Integer> neighbor : neighbors.entrySet()) {
+                    String neighborNode = neighbor.getKey();
+                    int weight = neighbor.getValue();
+                    int newDist = dist.get(currentNode) + weight;
+
+                    // 如果找到更短的路径，则更新优先队列和距离表
+                    if (newDist < dist.get(neighborNode)) {
+                        pq.remove(new AbstractMap.SimpleEntry<>(neighborNode, dist.get(neighborNode)));
+                        dist.put(neighborNode, newDist);
+                        prev.put(neighborNode, currentNode);
+                        pq.add(new AbstractMap.SimpleEntry<>(neighborNode, newDist));
+                    }
+                }
+            }
+        }
+
+        // 打印从 startWord 到所有其他节点的路径
+        for (String vertex : graph.keySet()) {
+            if (!vertex.equals(startWord)) {
+                StringBuilder path = new StringBuilder(vertex);
+                String currentNode = vertex;
+
+                // 通过前驱节点表重建路径
+                while (prev.get(currentNode) != null) {
+                    path.insert(0, "→").insert(0, prev.get(currentNode));
+                    currentNode = prev.get(currentNode);
+                }
+
+                System.out.println("最短路径从 " + startWord + " 到 " + vertex + ": " + path.toString());
+            }
+        }
+    }
 
     public String randomWalk() {
         Random random = new Random();
+        Scanner scanner = new Scanner(System.in);
         String startNode = getRandomNode(graph.keySet()); // 假设这是获取图中随机起点的函数
         Set<String> visitedEdges = new HashSet<>();
         StringBuilder walkStringBuilder = new StringBuilder(startNode);
@@ -356,6 +417,12 @@ class TextGraphAnalyzer {
             // 记录节点和边
             walkStringBuilder.append(" ").append(nextNode);
             startNode = nextNode; // 移动到下一个节点
+            // 提示用户是否停止遍历
+            System.out.println("键入“q”停止遍历：");
+            String input = scanner.nextLine();
+            if (input.equalsIgnoreCase("q")) {
+                break;
+            }
         }
         // 写入文件
         writeWalkToFile(walkStringBuilder.toString());
@@ -384,48 +451,4 @@ class TextGraphAnalyzer {
         }
     }
 
-    /*// 可视化图
-    public void visualizeGraph() {
-        // 设置图形库的 UI 包
-        System.setProperty("org.graphstream.ui", "swing");
-
-        // 创建有向图对象
-        Graph directedGraph = new SingleGraph("Directed Graph");
-
-        // 添加节点和边到图中
-        for (String source : graph.keySet()) {
-            // 添加源节点（如果不存在）
-            if (directedGraph.getNode(source) == null) {
-                directedGraph.addNode(source).setAttribute("ui.label", source);
-                // 设置节点标签的样式（字体大小和颜色）
-                directedGraph.getNode(source).setAttribute("ui.style", "text-size: 20px; text-color: blue;");
-            }
-            for (String target : graph.get(source).keySet()) {
-                // 添加目标节点（如果不存在）
-                if (directedGraph.getNode(target) == null) {
-                    directedGraph.addNode(target).setAttribute("ui.label", target);
-                    // 设置节点标签的样式（字体大小和颜色）
-                    directedGraph.getNode(target).setAttribute("ui.style", "text-size: 20px; text-color: blue;");
-                }
-                int weight = graph.get(source).get(target);
-                String edgeId = source + "_" + target;
-                // 添加边（如果不存在）
-                if (directedGraph.getEdge(edgeId) == null) {
-                    Edge edge = directedGraph.addEdge(edgeId, source, target, true);
-                    edge.setAttribute("weight", weight);
-                    // 设置边标签的样式（字体大小和颜色），以及箭头大小
-                    edge.setAttribute("ui.style", "text-size: 20px; text-color: red; arrow-size: 10px;");
-                }
-            }
-        }
-
-        // 设置边标签
-        directedGraph.edges().forEach(edge -> edge.setAttribute("ui.label", edge.getAttribute("weight")));
-
-        // 显示图形
-        Viewer viewer = directedGraph.display();
-        viewer.setCloseFramePolicy(Viewer.CloseFramePolicy.HIDE_ONLY);
-        System.out.println(">>>>");
-        return ;
-    }*/
 }
