@@ -96,7 +96,7 @@ class TextGraphAnalyzer {
     }
   }
 
-  private String querybridgeWords(String word1, String word2) {
+  public String queryBridgeWords(String word1, String word2) {
 
     if (!graph.containsKey(word1) || !graph.containsKey(word2)) {
       return "";
@@ -105,9 +105,9 @@ class TextGraphAnalyzer {
     List<String> bridgeWords = new ArrayList<>();
     for (Map.Entry<String, Map<String, Integer>> entry : graph.entrySet()) {
       String node = entry.getKey();
-      Map<String, ?> neighbors = entry.getValue();
+      Map<String, Integer> neighbors = entry.getValue();
 
-      if (neighbors.containsKey(word1) && neighbors.containsKey(word2)) {
+      if (graph.get(word1).containsKey(node) && neighbors.containsKey(word2)) {
         bridgeWords.add(node);
       }
     }
@@ -123,7 +123,7 @@ class TextGraphAnalyzer {
   }
 
   public void showBridgeWords(String word1, String word2) {
-    String result = querybridgeWords(word1, word2);
+    String result = queryBridgeWords(word1, word2);
     if (result.isEmpty()) {
       if (graph.containsKey(word1)) {
         System.out.printf("No %s in the graph!", word2);
@@ -148,7 +148,7 @@ class TextGraphAnalyzer {
 
     for (int i = 0; i < words.length - 1; i++) {
       // 尝试查询桥接词
-      String result = querybridgeWords(words[i].toLowerCase(), words[i + 1].toLowerCase());
+      String result = queryBridgeWords(words[i].toLowerCase(), words[i + 1].toLowerCase());
 
       // 如果找到了桥接词，随机选择一个插入；否则直接添加原单词对
       if (!result.isEmpty() && !result.equals(" ")) {

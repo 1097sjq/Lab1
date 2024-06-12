@@ -62,4 +62,70 @@ class TextGraphAnalyzerTest {
     assertEquals(expectedPath, result, "The calculated path does not match the expected path.");
   }
 
+  @org.junit.jupiter.api.Test
+  void queryBridgeWordsCase1() {
+    String word1 = "start";
+    String word2 = "to";
+    String expectedPath = "";
+    // 调用queryBridgeWords方法
+    String result = analyzer.queryBridgeWords(word1, word2);
+    // 验证结果
+    assertEquals(expectedPath, result, "The bridge words does not match the expected words.");
+  }
+
+  @org.junit.jupiter.api.Test
+  void queryBridgeWordsCase2() {
+    String word1 = "new";
+    String word2 = "end";
+    String expectedPath = "";
+    // 调用queryBridgeWords方法
+    String result = analyzer.queryBridgeWords(word1, word2);
+    // 验证结果
+    assertEquals(expectedPath, result, "The bridge words does not match the expected words.");
+  }
+
+  @org.junit.jupiter.api.Test
+  void queryBridgeWordsCase3() {
+    String word1 = "start";
+    String word2 = "end";
+    String expectedPath = "";
+    // 调用queryBridgeWords方法
+    String result = analyzer.queryBridgeWords(word1, word2);
+    // 验证结果
+    assertEquals(expectedPath, result, "The bridge words does not match the expected words.");
+  }
+
+  @org.junit.jupiter.api.Test
+  void queryBridgeWordsCase4() {
+    String word1 = "the";
+    String word2 = "old";
+    String expectedPath = " ";
+    // 调用queryBridgeWords方法
+    String result = analyzer.queryBridgeWords(word1, word2);
+    // 验证结果
+    assertEquals(expectedPath, result, "The bridge words does not match the expected words.");
+  }
+
+  @org.junit.jupiter.api.Test
+  void queryBridgeWordsCase5() {
+    String word1 = "sea";
+    String word2 = "tied";
+    String expectedPath = "each";
+    // 调用queryBridgeWords方法
+    String result = analyzer.queryBridgeWords(word1, word2);
+    // 验证结果
+    assertEquals(expectedPath, result, "The bridge words does not match the expected words.");
+  }
+
+  @org.junit.jupiter.api.Test
+  void queryBridgeWordsCase6() {
+    String word1 = "new";
+    String word2 = "and";
+    String expectedPath = "life, civilizations";
+    // 调用queryBridgeWords方法
+    String result = analyzer.queryBridgeWords(word1, word2);
+    // 验证结果
+    assertEquals(expectedPath, result, "The bridge words does not match the expected words.");
+  }
+
 }
