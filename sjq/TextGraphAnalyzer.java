@@ -3,9 +3,13 @@ package sjq;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.FileReader;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.SecureRandom;
@@ -34,10 +38,13 @@ class TextGraphAnalyzer {
     this.graph = buildGraphFromFile(filePath);
   }
 
-  @SuppressFBWarnings({"DM_DEFAULT_ENCODING", "PATH_TRAVERSAL_IN"})
+
+  @SuppressFBWarnings("PATH_TRAVERSAL_IN")
   private Map<String, Map<String, Integer>> buildGraphFromFile(String filePath) {
     Map<String, Map<String, Integer>> graph = new HashMap<>(); // 初始化图
-    try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
+    Path normalPath = Paths.get(filePath).toAbsolutePath().normalize();
+    try (BufferedReader br = new BufferedReader(new
+        InputStreamReader(new FileInputStream(normalPath.toFile()), "UTF-8"))) {
       String line;
       String previousWord = null; // 保存上一行最后一个单词
 
@@ -70,6 +77,12 @@ class TextGraphAnalyzer {
       if (previousWord != null && !graph.containsKey(previousWord)) {
         graph.put(previousWord, new HashMap<>());
       }
+    } catch (FileNotFoundException e) {
+      // 处理文件读取错误
+      System.err.println("Error reading file: " + e.getMessage());
+    } catch (UnsupportedEncodingException e) {
+      // 处理文件读取错误
+      System.err.println("Error reading file: " + e.getMessage());
     } catch (IOException e) {
       // 处理文件读取错误
       System.err.println("Error reading file: " + e.getMessage());
