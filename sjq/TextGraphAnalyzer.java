@@ -105,9 +105,9 @@ class TextGraphAnalyzer {
     List<String> bridgeWords = new ArrayList<>();
     for (Map.Entry<String, Map<String, Integer>> entry : graph.entrySet()) {
       String node = entry.getKey();
-      Map<String, ?> neighbors = entry.getValue();
+      Map<String, Integer> neighbors = entry.getValue();
 
-      if (neighbors.containsKey(word1) && neighbors.containsKey(word2)) {
+      if (graph.get(word1).containsKey(node) && neighbors.containsKey(word2)) {
         bridgeWords.add(node);
       }
     }
