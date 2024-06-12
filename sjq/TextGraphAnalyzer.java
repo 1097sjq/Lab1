@@ -3,9 +3,13 @@ package sjq;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.FileReader;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.SecureRandom;
@@ -34,10 +38,13 @@ class TextGraphAnalyzer {
     this.graph = buildGraphFromFile(filePath);
   }
 
-  @SuppressFBWarnings({"DM_DEFAULT_ENCODING", "PATH_TRAVERSAL_IN"})
+
+  @SuppressFBWarnings("PATH_TRAVERSAL_IN")
   private Map<String, Map<String, Integer>> buildGraphFromFile(String filePath) {
     Map<String, Map<String, Integer>> graph = new HashMap<>(); // 初始化图
-    try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
+    Path normalPath = Paths.get(filePath).toAbsolutePath().normalize();
+    try (BufferedReader br = new BufferedReader(new
+        InputStreamReader(new FileInputStream(normalPath.toFile()), "UTF-8"))) {
       String line;
       String previousWord = null; // 保存上一行最后一个单词
 
@@ -70,6 +77,12 @@ class TextGraphAnalyzer {
       if (previousWord != null && !graph.containsKey(previousWord)) {
         graph.put(previousWord, new HashMap<>());
       }
+    } catch (FileNotFoundException e) {
+      // 处理文件读取错误
+      System.err.println("Error reading file: " + e.getMessage());
+    } catch (UnsupportedEncodingException e) {
+      // 处理文件读取错误
+      System.err.println("Error reading file: " + e.getMessage());
     } catch (IOException e) {
       // 处理文件读取错误
       System.err.println("Error reading file: " + e.getMessage());
@@ -96,7 +109,7 @@ class TextGraphAnalyzer {
     }
   }
 
-  private String querybridgeWords(String word1, String word2) {
+  public String queryBridgeWords(String word1, String word2) {
 
     if (!graph.containsKey(word1) || !graph.containsKey(word2)) {
       return "";
@@ -123,7 +136,7 @@ class TextGraphAnalyzer {
   }
 
   public void showBridgeWords(String word1, String word2) {
-    String result = querybridgeWords(word1, word2);
+    String result = queryBridgeWords(word1, word2);
     if (result.isEmpty()) {
       if (graph.containsKey(word1)) {
         System.out.printf("No %s in the graph!", word2);
@@ -148,7 +161,7 @@ class TextGraphAnalyzer {
 
     for (int i = 0; i < words.length - 1; i++) {
       // 尝试查询桥接词
-      String result = querybridgeWords(words[i].toLowerCase(), words[i + 1].toLowerCase());
+      String result = queryBridgeWords(words[i].toLowerCase(), words[i + 1].toLowerCase());
 
       // 如果找到了桥接词，随机选择一个插入；否则直接添加原单词对
       if (!result.isEmpty() && !result.equals(" ")) {
